@@ -39,8 +39,13 @@ public class ConcurrentTestUtil {
             });
         }
 
-        latch.await(10, TimeUnit.SECONDS);
-        executorService.shutdown();
+        try {
+            if (!latch.await(60, TimeUnit.SECONDS)) {
+                throw new AssertionError("동시성 작업이 제한 시간 내에 완료되지 않았습니다.");
+            }
+        } finally {
+            executorService.shutdownNow();
+        }
     }
 
     public static void executeConcurrentJoins(
@@ -64,7 +69,12 @@ public class ConcurrentTestUtil {
             });
         }
 
-        latch.await(10, TimeUnit.SECONDS);
-        executorService.shutdown();
+        try {
+            if (!latch.await(60, TimeUnit.SECONDS)) {
+                throw new AssertionError("동시성 작업이 제한 시간 내에 완료되지 않았습니다.");
+            }
+        } finally {
+            executorService.shutdownNow();
+        }
     }
 } 

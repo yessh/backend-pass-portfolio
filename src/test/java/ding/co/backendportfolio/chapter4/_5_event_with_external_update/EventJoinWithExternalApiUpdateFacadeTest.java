@@ -62,11 +62,13 @@ class EventJoinWithExternalApiUpdateFacadeTest {
         }).when(eventJoinService).joinEventWithTransaction(any(), any());
 
         doAnswer(invocation -> {
-            updateExternalIdCallCount.incrementAndGet();
-            if (Math.random() >= 0.5) {  // 50% 확률로 실패
+            int attempt = updateExternalIdCallCount.incrementAndGet();
+
+            if (attempt % 2 == 0) {
                 updateExternalIdSuccessCount.incrementAndGet();
                 return null;
             }
+
             throw new RuntimeException("DB 업데이트 실패 시뮬레이션");
         }).when(eventJoinService).updateExternalId(any(), any());
 
@@ -93,14 +95,13 @@ class EventJoinWithExternalApiUpdateFacadeTest {
         // then
         logTestResults();
 
-        assertThat(externalApiCallCount.get())
-                .as("외부 API 호출 횟수가 DB 업데이트 성공 횟수보다 많아야 함")
-                .isGreaterThan(updateExternalIdSuccessCount.get());
+        assertThat(externalApiCallCount.get()).isEqualTo(20);
+        assertThat(updateExternalIdCallCount.get()).isEqualTo(20);
+        assertThat(updateExternalIdSuccessCount.get()).isEqualTo(10);
 
-        double actualSuccessRate = (double) updateExternalIdSuccessCount.get() / updateExternalIdCallCount.get();
-        assertThat(actualSuccessRate)
-                .as("DB 업데이트 성공률이 약 50%여야 함")
-                .isBetween(0.3, 0.7);  // 30%~70% 범위 내 성공률 허용
+        assertThat(externalApiCallCount.get() - updateExternalIdSuccessCount.get())
+                .as("외부 API와 DB 업데이트 불일치 건수")
+                .isEqualTo(10);
     }
 
     private void logTestResults() {
@@ -110,7 +111,9 @@ class EventJoinWithExternalApiUpdateFacadeTest {
         log.info("DB 업데이트 시도 횟수: {}", updateExternalIdCallCount.get());
         log.info("DB 업데이트 성공 횟수: {}", updateExternalIdSuccessCount.get());
         log.info("불일치 건수: {}", (externalApiCallCount.get() - updateExternalIdSuccessCount.get()));
-        log.info("DB 업데이트 성공률: {:.2f}%", 
-                (double) updateExternalIdSuccessCount.get() / updateExternalIdCallCount.get() * 100);
+        log.info("DB 업데이트 성공률: {}%",
+                String.format("%.2f",
+                        (double) updateExternalIdSuccessCount.get()
+                                / updateExternalIdCallCount.get() * 100));
     }
 } 
