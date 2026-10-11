@@ -34,6 +34,7 @@ services:
       - "8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/portfolio?allowPublicKeyRetrieval=true&useSSL=false&rewriteBatchedStatements=true
+      SPRING_DATA_REDIS_HOST: redis   # 컨테이너 내부에선 localhost가 자기 자신이므로 서비스명 사용
       JAVA_OPTS: "-Xms256m -Xmx512m"  # JVM 힙 메모리 제한
     deploy:
       resources:
